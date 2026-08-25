@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcards & Quiz - Phrasal Verbs & Idioms</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); min-height: 100vh; color: #333; padding: 15px; }
+.container { max-width: 700px; margin: 0 auto; }
+.header { text-align: center; padding: 20px 0; }
+.header h1 { color: #fff; font-size: 1.8em; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+.header p { color: #a0c4ff; margin-top: 5px; font-size: 0.95em; }
+.mode-bar { display: flex; gap: 10px; justify-content: center; margin: 15px 0 25px; }
+.mode-btn { padding: 10px 24px; border: none; border-radius: 25px; font-size: 0.95em; font-weight: 700; cursor: pointer; transition: all 0.3s; background: rgba(255,255,255,0.1); color: #a0c4ff; border: 2px solid rgba(255,255,255,0.2); }
+.mode-btn.active { background: #e94560; color: white; border-color: #e94560; box-shadow: 0 4px 15px rgba(233,69,96,0.4); }
+.mode-btn:hover:not(.active) { background: rgba(255,255,255,0.2); color: white; }
+.section-title { text-align: center; color: #fff; font-size: 1.1em; margin-bottom: 15px; opacity: 0.9; }
+.flashcard-section { display: none; }
+.flashcard-section.active { display: block; }
+.category-tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 15px; }
+.cat-btn { padding: 8px 18px; border-radius: 20px; border: none; font-weight: 600; cursor: pointer; font-size: 0.85em; transition: 0.3s; }
+.cat-btn.pv { background: #1565c0; color: white; }
+.cat-btn.idiom { background: #c62828; color: white; }
+.cat-btn.inactive { background: rgba(255,255,255,0.15); color: #aaa; }
+.card-container { perspective: 1000px; margin-bottom: 20px; }
+.flashcard { width: 100%; min-height: 320px; position: relative; transform-style: preserve-3d; transition: transform 0.6s; cursor: pointer; }
+.flashcard.flipped { transform: rotateY(180deg); }
+.card-face { position: absolute; width: 100%; min-height: 320px; backface-visibility: hidden; border-radius: 16px; padding: 25px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+.card-front { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+.card-back { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; transform: rotateY(180deg); }
+.card-front.pv-front { background: linear-gradient(135deg, #1565c0, #42a5f5); }
+.card-back.pv-back { background: linear-gradient(135deg, #0d47a1, #1976d2); }
+.card-front.idiom-front { background: linear-gradient(135deg, #c62828, #ef5350); }
+.card-back.idiom-back { background: linear-gradient(135deg, #b71c1c, #d32f2f); }
+.card-front h2 { font-size: 2em; margin-bottom: 10px; text-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+.card-front .type-label { background: rgba(255,255,255,0.25); padding: 5px 15px; border-radius: 15px; font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px; }
+.card-back .meaning { font-size: 1.3em; font-weight: 700; margin-bottom: 12px; background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 10px; }
+.card-back .urdu { font-family: 'Noto Nastaliq Urdu', serif; font-size: 1.3em; direction: rtl; line-height: 2; margin-bottom: 12px; background: rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 10px; width: 100%; }
+.card-back .example { font-style: italic; font-size: 0.95em; opacity: 0.95; margin-bottom: 8px; }
+.card-back .sentences { margin-top: 10px; text-align: left; width: 100%; }
+.card-back .sentences div { background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 0.88em; }
+.card-back .sent-label { font-weight: 700; font-size: 0.75em; text-transform: uppercase; opacity: 0.8; margin-bottom: 3px; }
+.flip-hint { text-align: center; color: #a0c4ff; font-size: 0.85em; margin-top: 10px; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+.nav-btns { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
+.nav-btn { padding: 10px 22px; border: none; border-radius: 25px; font-weight: 700; cursor: pointer; font-size: 0.9em; transition: 0.3s; background: rgba(255,255,255,0.15); color: white; }
+.nav-btn:hover { background: rgba(255,255,255,0.3); transform: scale(1.05); }
+.nav-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+.card-counter { text-align: center; color: #a0c4ff; margin-top: 12px; font-size: 0.9em; }
+.quiz-section { display: none; }
+.quiz-section.active { display: block; }
+.quiz-card { background: white; border-radius: 16px; padding: 25px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); margin-bottom: 20px; }
+.quiz-question { font-size: 1.2em; font-weight: 700; color: #1a1a2e; margin-bottom: 20px; text-align: center; }
+.quiz-question .q-num { display: inline-block; background: #e94560; color: white; width: 30px; height: 30px; border-radius: 50%; text-align: center; line-height: 30px; font-size: 0.85em; margin-right: 8px; }
+.quiz-options { display: flex; flex-direction: column; gap: 10px; }
+.opt-btn { padding: 14px 18px; border: 2px solid #e0e0e0; border-radius: 12px; background: #f8f9fa; cursor: pointer; font-size: 0.95em; text-align: left; transition: all 0.3s; font-weight: 500; }
+.opt-btn:hover { border-color: #667eea; background: #f0f3ff; transform: translateX(5px); }
+.opt-btn.correct { border-color: #4caf50; background: #e8f5e9; color: #1b5e20; }
+.opt-btn.wrong { border-color: #f44336; background: #ffebee; color: #b71c1c; }
+.opt-btn:disabled { cursor: default; }
+.quiz-result { text-align: center; padding: 20px; }
+.quiz-result h2 { color: #1a1a2e; font-size: 1.8em; margin-bottom: 10px; }
+.quiz-result .score { font-size: 3em; font-weight: 800; color: #e94560; }
+.quiz-result .msg { color: #666; margin: 10px 0; }
+.restart-btn { padding: 12px 30px; background: #e94560; color: white; border: none; border-radius: 25px; font-size: 1em; font-weight: 700; cursor: pointer; margin-top: 15px; }
+.progress-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-bottom: 20px; overflow: hidden; }
+.progress-fill { height: 100%; background: #e94560; border-radius: 3px; transition: width 0.4s; width: 0%; }
+@media (max-width: 500px) {
+  .card-face { padding: 18px; min-height: 280px; }
+  .card-front h2 { font-size: 1.5em; }
+  .card-back .meaning { font-size: 1.1em; }
+  .mode-btn { padding: 8px 16px; font-size: 0.85em; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Flashcards & Quiz</h1>
+    <p>Phrasal Verbs & Idioms with Urdu Meanings</p>
+  </div>
+  <div class="mode-bar">
+    <button class="mode-btn active" onclick="setMode('flashcards')">Flashcards</button>
+    <button class="mode-btn" onclick="setMode('quiz')">Quiz</button>
+  </div>
+  <div id="flashcards" class="flashcard-section active">
+    <p class="section-title">Tap the card to flip and reveal the meaning!</p>
+    <div class="category-tabs">
+      <button class="cat-btn pv" id="tab-pv" onclick="setCategory('pv')">Phrasal Verbs</button>
+      <button class="cat-btn idiom inactive" id="tab-idiom" onclick="setCategory('idiom')">Idioms</button>
+    </div>
+    <div class="card-container">
+      <div class="flashcard" id="flashcard" onclick="flipCard()">
+        <div class="card-face card-front pv-front" id="card-front">
+          <span class="type-label" id="front-type">Phrasal Verb</span>
+          <h2 id="front-text">Come over</h2>
+          <p style="opacity:0.7;margin-top:10px;font-size:0.9em;">Tap to flip</p>
+        </div>
+        <div class="card-face card-back pv-back" id="card-back">
+          <div class="meaning" id="back-meaning">Visit someone at their home</div>
+          <div class="urdu" id="back-urdu">کسی کے گھر جانا / کسی سے ملنے جانا</div>
+          <div class="example" id="back-original">"Why don't you come over for coffee?"</div>
+          <div class="sentences">
+            <div><span class="sent-label">Easy:</span> <span id="back-easy">Can you come over to my house after school?</span></div>
+            <div><span class="sent-label">Advanced:</span> <span id="back-advanced">The manager asked the client to come over to the office for a detailed discussion.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="flip-hint">Tap the card to flip</p>
+    <div class="nav-btns">
+      <button class="nav-btn" id="prevBtn" onclick="prevCard()">Previous</button>
+      <button class="nav-btn" id="nextBtn" onclick="nextCard()">Next</button>
+    </div>
+    <p class="card-counter" id="counter">1 / 10</p>
+  </div>
+  <div id="quiz" class="quiz-section">
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+    <div id="quiz-content">
+      <div class="quiz-card">
+        <div class="quiz-question"><span class="q-num" id="q-num">1</span><span id="q-text">What does "No worries" mean?</span></div>
+        <div class="quiz-options" id="q-options"></div>
+      </div>
+    </div>
+    <div id="quiz-end" style="display:none;">
+      <div class="quiz-card quiz-result">
+        <h2>Quiz Complete!</h2>
+        <div class="score" id="final-score">0/20</div>
+        <p class="msg" id="score-msg">Great job!</p>
+        <button class="restart-btn" onclick="restartQuiz()">Try Again</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const phrasalVerbs = [
+  { phrase: "Come over", meaning: "Visit someone at their home", urdu: "کسی کے گھر جانا / کسی سے ملنے جانا", original: "Why don't you come over for coffee?", easy: "Can you come over to my house after school?", advanced: "The manager asked the client to come over to the office for a detailed discussion regarding the merger proposal." },
+  { phrase: "Go out", meaning: "Leave home for a social activity", urdu: "گھر سے باہر تفریح کے لیے جانا", original: "We're going out for dinner tonight.", easy: "I like to go out with my friends on weekends.", advanced: "After months of isolation, she finally decided to go out and reconnect with her professional network at the industry gala." },
+  { phrase: "Wake up", meaning: "Stop sleeping", urdu: "نیند سے بیدار ہونا", original: "I usually wake up at 7 a.m.", easy: "Please wake up early tomorrow for the trip.", advanced: "The nation needed to wake up to the harsh realities of climate change before irreversible damage was done to the ecosystem." },
+  { phrase: "Get up", meaning: "Leave your bed", urdu: "بستر سے اٹھنا", original: "I got up late this morning.", easy: "I get up at 6 o'clock every day for school.", advanced: "Despite the exhaustion from the overnight flight, she had to get up and prepare for the crucial board meeting." },
+  { phrase: "Turn on", meaning: "Start a device/light", urdu: "کسی آلہ یا بتی کو جلانا / چالو کرنا", original: "Can you turn on the lights?", easy: "Please turn on the TV, my favorite show is starting.", advanced: "The engineer was instructed to turn on the backup generators before the main power grid completely failed." },
+  { phrase: "Turn off", meaning: "Stop a device/light", urdu: "کسی آلہ یا بتی کو بند کرنا", original: "Please turn off the TV.", easy: "Don't forget to turn off the fan when you leave.", advanced: "The security protocol required them to turn off all electronic devices before entering the classified briefing room." },
+  { phrase: "Put on", meaning: "Wear clothing/accessories", urdu: "کپڑے یا زیورات پہننا", original: "Put on your jacket. It's cold outside.", easy: "Put on your shoes before going outside.", advanced: "She put on her most confident demeanor before stepping onto the stage to deliver the keynote address." },
+  { phrase: "Take off", meaning: "Remove clothing / leave the ground", urdu: "کپڑے اتارنا / زمین چھوڑنا", original: "You can take off your shoes at the door.", easy: "Please take off your hat inside the classroom.", advanced: "The aircraft began to take off as the passengers fastened their seatbelts for the long-haul flight to Tokyo." },
+  { phrase: "Look after", meaning: "Take care of someone/something", urdu: "کسی یا کسی چیز کی دیکھ بھال کرنا", original: "Can you look after my dog this weekend?", easy: "My mother asked me to look after my little sister.", advanced: "The curator was entrusted to look after the priceless artifacts during the museum's extensive renovation period." },
+  { phrase: "Call back", meaning: "Return someone's phone call", urdu: "کسی کے فون کا جواب دینا / واپس کال کرنا", original: "I'm busy right now. Can I call you back?", easy: "The doctor will call back with your test results.", advanced: "The embassy promised to call back within 24 hours regarding the visa application status." }
+];
+const idioms = [
+  { phrase: "No worries", meaning: "It's okay / no problem", urdu: "کوئی بات نہیں / کوئی پریشانی نہیں", original: "No worries, I can wait.", easy: "You forgot your book? No worries, you can share mine.", advanced: "No worries about the minor delay; we have built sufficient buffer time into the project timeline." },
+  { phrase: "Sounds good", meaning: "I agree with the plan", urdu: "اچھی بات ہے / منظور ہے", original: "Let's meet at 6. — Sounds good!", easy: "Pizza for dinner? Sounds good to me!", advanced: "Your proposal to restructure the department sounds good, provided we can secure executive approval first." },
+  { phrase: "Give it a shot", meaning: "Try something", urdu: "کوشش کرنا / آزمانا", original: "I've never tried skiing, but I'll give it a shot.", easy: "I don't know if I can fix it, but I'll give it a shot.", advanced: "The algorithm seems complex, but give it a shot before we outsource the entire module." },
+  { phrase: "Call it a day", meaning: "Stop working for today", urdu: "آج کا کام ختم کرنا / دن کا کام ختم کرنا", original: "We've been working for hours. Let's call it a day.", easy: "I'm tired. Let's call it a day and finish tomorrow.", advanced: "After resolving the critical server issue, the IT team decided to call it a day and resume routine maintenance in the morning." },
+  { phrase: "Hang in there", meaning: "Don't give up", urdu: "ہمت نہ ہارنا / ثابت قدم رہنا", original: "I know it's difficult, but hang in there.", easy: "The test is hard, but hang in there! You can do it!", advanced: "Despite the volatile market conditions, investors were advised to hang in there and avoid panic selling." },
+  { phrase: "It's up to you", meaning: "You can decide", urdu: "یہ آپ کی مرضی ہے / آپ فیصلہ کر سکتے ہیں", original: "We can eat here or go somewhere else. It's up to you.", easy: "Which movie should we watch? It's up to you!", advanced: "The board has outlined both strategies, but the final decision is up to you as the project lead." },
+  { phrase: "My bad", meaning: "My mistake", urdu: "میری غلطی / میری خطا", original: "Oh, I sent you the wrong file. My bad!", easy: "I took your pen by mistake. My bad!", advanced: "My bad for overlooking the clause in the contract; I'll have the legal team amend it immediately." },
+  { phrase: "I'm good", meaning: "No, thank you / I'm okay", urdu: "نہیں شکریہ / میں ٹھیک ہوں", original: "Would you like another coffee? — No, I'm good, thanks.", easy: "More water? No, I'm good, thanks.", advanced: "The host offered another round of dessert, but I'm good; I've already exceeded my calorie limit for the day." },
+  { phrase: "On the same page", meaning: "Have the same understanding", urdu: "ایک ہی صفحے پر ہونا / ایک ہی رائے ہونا", original: "Let's make sure we're on the same page before we start.", easy: "Are we on the same page about the homework assignment?", advanced: "Before proceeding with the merger, both companies wanted to ensure they were on the same page regarding intellectual property rights." },
+  { phrase: "Keep an eye on", meaning: "Watch/check something", urdu: "نظر رکھنا / دھیان دینا", original: "Can you keep an eye on my bag for a minute?", easy: "Please keep an eye on the baby while I cook.", advanced: "The analyst was asked to keep an eye on the fluctuating exchange rates and report any significant movements to the treasury department." }
+];
+let currentCategory = 'pv', currentIndex = 0, isFlipped = false;
+function setCategory(cat) {
+  currentCategory = cat; currentIndex = 0; isFlipped = false;
+  document.getElementById('flashcard').classList.remove('flipped');
+  document.getElementById('tab-pv').className = cat === 'pv' ? 'cat-btn pv' : 'cat-btn pv inactive';
+  document.getElementById('tab-idiom').className = cat === 'idiom' ? 'cat-btn idiom' : 'cat-btn idiom inactive';
+  updateCard();
+}
+function updateCard() {
+  const data = currentCategory === 'pv' ? phrasalVerbs : idioms;
+  const item = data[currentIndex], isPv = currentCategory === 'pv';
+  document.getElementById('front-type').textContent = isPv ? 'Phrasal Verb' : 'Idiom';
+  document.getElementById('front-text').textContent = item.phrase;
+  document.getElementById('back-meaning').textContent = item.meaning;
+  document.getElementById('back-urdu').textContent = item.urdu;
+  document.getElementById('back-original').textContent = '"' + item.original + '"';
+  document.getElementById('back-easy').textContent = item.easy;
+  document.getElementById('back-advanced').textContent = item.advanced;
+  document.getElementById('card-front').className = 'card-face card-front ' + (isPv ? 'pv-front' : 'idiom-front');
+  document.getElementById('card-back').className = 'card-face card-back ' + (isPv ? 'pv-back' : 'idiom-back');
+  document.getElementById('counter').textContent = (currentIndex + 1) + ' / ' + data.length;
+  document.getElementById('prevBtn').disabled = currentIndex === 0;
+  document.getElementById('nextBtn').disabled = currentIndex === data.length - 1;
+}
+function flipCard() { isFlipped = !isFlipped; document.getElementById('flashcard').classList.toggle('flipped', isFlipped); }
+function nextCard() { const data = currentCategory === 'pv' ? phrasalVerbs : idioms; if (currentIndex < data.length - 1) { currentIndex++; isFlipped = false; document.getElementById('flashcard').classList.remove('flipped'); updateCard(); } }
+function prevCard() { if (currentIndex > 0) { currentIndex--; isFlipped = false; document.getElementById('flashcard').classList.remove('flipped'); updateCard(); } }
+let quizQuestions = [], quizIndex = 0, quizScore = 0, answered = false;
+function generateQuiz() {
+  quizQuestions = [];
+  const allItems = [...phrasalVerbs.map(x => ({...x, type: 'pv'})), ...idioms.map(x => ({...x, type: 'idiom'}))];
+  allItems.forEach(item => {
+    const wrong = allItems.filter(x => x.meaning !== item.meaning).sort(() => 0.5 - Math.random()).slice(0, 3);
+    const opts = [...wrong, item].sort(() => 0.5 - Math.random());
+    quizQuestions.push({ question: 'What does "' + item.phrase + '" mean?', options: opts.map(x => x.meaning), correct: item.meaning });
+  });
+  allItems.forEach(item => {
+    const sentence = item.original.replace(item.phrase, '_______');
+    const wrong = allItems.filter(x => x.phrase !== item.phrase).sort(() => 0.5 - Math.random()).slice(0, 3);
+    const opts = [...wrong.map(x => x.phrase), item.phrase].sort(() => 0.5 - Math.random());
+    quizQuestions.push({ question: 'Fill in the blank: "' + sentence + '"', options: opts, correct: item.phrase });
+  });
+  quizQuestions = quizQuestions.sort(() => 0.5 - Math.random());
+  quizIndex = 0; quizScore = 0; answered = false;
+}
+function showQuestion() {
+  const q = quizQuestions[quizIndex];
+  document.getElementById('q-num').textContent = quizIndex + 1;
+  document.getElementById('q-text').textContent = q.question;
+  document.getElementById('progress').style.width = ((quizIndex / quizQuestions.length) * 100) + '%';
+  const optsDiv = document.getElementById('q-options');
+  optsDiv.innerHTML = '';
+  q.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn'; btn.textContent = opt;
+    btn.onclick = () => selectAnswer(btn, opt, q.correct);
+    optsDiv.appendChild(btn);
+  });
+  answered = false;
+}
+function selectAnswer(btn, selected, correct) {
+  if (answered) return; answered = true;
+  document.querySelectorAll('.opt-btn').forEach(b => { b.disabled = true; if (b.textContent === correct) b.classList.add('correct'); });
+  if (selected !== correct) btn.classList.add('wrong'); else quizScore++;
+  setTimeout(() => { quizIndex++; if (quizIndex < quizQuestions.length) showQuestion(); else showResults(); }, 1200);
+}
+function showResults() {
+  document.getElementById('quiz-content').style.display = 'none';
+  document.getElementById('quiz-end').style.display = 'block';
+  document.getElementById('final-score').textContent = quizScore + '/' + quizQuestions.length;
+  const pct = quizScore / quizQuestions.length;
+  document.getElementById('score-msg').textContent = pct >= 0.9 ? 'Outstanding! You are a master!' : pct >= 0.7 ? 'Great job! Keep practicing!' : pct >= 0.5 ? 'Good effort! Review the flashcards!' : 'Keep studying! You will get there!';
+}
+function restartQuiz() { generateQuiz(); document.getElementById('quiz-content').style.display = 'block'; document.getElementById('quiz-end').style.display = 'none'; showQuestion(); }
+function setMode(mode) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('flashcards').classList.toggle('active', mode === 'flashcards');
+  document.getElementById('quiz').classList.toggle('active', mode === 'quiz');
+  if (mode === 'quiz' && quizQuestions.length === 0) { generateQuiz(); showQuestion(); }
+}
+updateCard();
+</script>
+</body>
+</html>
